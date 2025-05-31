@@ -4,3 +4,7 @@
 
 /.vs/SistemaCajaAhorro/FileContentIndex
 /obj
+/bin/Debug/net8.0
+/.vs/SistemaCajaAhorro/CopilotIndices/17.14.698.11175
+/Models/Aportacione.cs
+*.tmp

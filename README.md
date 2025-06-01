@@ -5,7 +5,7 @@
 1. **Gestión de usuarios** (Encargado: Bryan Avila):  
    Permite crear, actualizar y eliminar usuarios y definir perfiles de acceso. Además de la administración de plan de cuentas asociado a los usuarios.
 
-2. **Gestión de socios** (Encargado: NombrePersonaB):  
+2. **Gestión de socios** (Encargado: Pablo Bravo):  
    Manejo de información general de los socios y la creación de sus cuentas.
 
 3. **Gestión de aportaciones** (Encargado: NombrePersonaC):  

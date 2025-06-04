@@ -186,5 +186,60 @@ namespace SistemaCajaAhorro.Controllers
             // Formato: XXX-00000001
             return $"{prefijo}-{numero:D8}";
         }
+
+        // GET: api/CuentasAhorro/resumen/{cedula}/{numeroCuenta}
+        [HttpGet("resumen/{cedula}/{numeroCuenta}")]
+        public async Task<IActionResult> ObtenerResumenCuenta(string cedula, string numeroCuenta)
+        {
+            // Buscar la cuenta por número y cédula
+            var cuenta = await _context.CuentasAhorros
+                .Include(c => c.IdSocioNavigation)
+                .FirstOrDefaultAsync(c =>
+                    c.NumeroCuenta == numeroCuenta &&
+                    c.IdSocioNavigation.Cedula == cedula);
+
+            if (cuenta == null)
+            {
+                return NotFound(new { mensaje = "Cuenta no encontrada." });
+            }
+
+            // Obtener los últimos 3 movimientos
+            var movimientos = await _context.MovimientosAhorros
+                .Where(m => m.IdCuentaAhorro == cuenta.IdCuentaAhorro)
+                .OrderByDescending(m => m.FechaMovimiento)
+                .Take(3)
+                .Select(m => new
+                {
+                    m.TipoMovimiento,
+                    m.Monto,
+                    m.SaldoAnterior,
+                    m.SaldoNuevo,
+                    m.FechaMovimiento,
+                    m.Descripcion
+                })
+                .ToListAsync();
+
+            var resumen = new
+            {
+                socio = new
+                {
+                    cuenta.IdSocioNavigation.IdSocio,
+                    cuenta.IdSocioNavigation.Nombres,
+                    cuenta.IdSocioNavigation.Apellidos,
+                    cuenta.IdSocioNavigation.Cedula
+                },
+                cuenta = new
+                {
+                    cuenta.NumeroCuenta,
+                    cuenta.TipoCuenta,
+                    cuenta.SaldoActual,
+                    cuenta.Estado
+                },
+                ultimosMovimientos = movimientos
+            };
+
+            return Ok(resumen);
+        }
+
     }
 } 

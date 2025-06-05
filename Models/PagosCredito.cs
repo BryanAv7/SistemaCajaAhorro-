@@ -11,6 +11,8 @@ public partial class PagosCredito
 
     public int? IdCuota { get; set; }
 
+    public string Estado { get; set; } = null!;
+
     public decimal MontoPago { get; set; }
 
     public decimal MontoCapital { get; set; }

@@ -91,36 +91,36 @@ namespace SistemaCajaAhorro.Controllers
             }
 
             // Validar que el monto del pago sea suficiente para al menos una cuota
-            if (pago.Monto < cuotasPendientes.First().CuotaMensual)
+            if (pago.MontoPago < cuotasPendientes.First().CuotaTotal)
             {
-                return BadRequest(new { mensaje = $"El monto mínimo de pago debe ser {cuotasPendientes.First().CuotaMensual:C}" });
+                return BadRequest(new { mensaje = $"El monto mínimo de pago debe ser {cuotasPendientes.First().CuotaTotal:C}" });
             }
 
             // Establecer valores por defecto
-            pago.FechaPago = DateTime.Now;
-            pago.Estado = "registrado";
+            pago.FechaPago = DateOnly.FromDateTime(DateTime.Now);
+            //pago.Estado = "registrado";
 
             // Distribuir el pago entre las cuotas pendientes
-            decimal montoRestante = pago.Monto;
+            decimal montoRestante = pago.MontoPago;
             var cuotasPagadas = new List<TablaAmortizacion>();
 
             foreach (var cuota in cuotasPendientes)
             {
                 if (montoRestante <= 0) break;
 
-                if (montoRestante >= cuota.CuotaMensual)
+                if (montoRestante >= cuota.CuotaTotal)
                 {
                     cuota.Estado = "pagada";
-                    cuota.FechaPago = DateOnly.FromDateTime(DateTime.Now);
-                    montoRestante -= cuota.CuotaMensual;
+                    pago.FechaPago = DateOnly.FromDateTime(DateTime.Now);
+                    montoRestante -= cuota.CuotaTotal;
                     cuotasPagadas.Add(cuota);
                 }
                 else
                 {
                     // Si el monto restante no alcanza para la cuota completa, se aplica como pago parcial
                     cuota.Estado = "parcial";
-                    cuota.FechaPago = DateOnly.FromDateTime(DateTime.Now);
-                    cuota.SaldoFinal -= montoRestante;
+                    pago.FechaPago = DateOnly.FromDateTime(DateTime.Now);
+                    cuota.SaldoPendiente -= montoRestante;
                     montoRestante = 0;
                     cuotasPagadas.Add(cuota);
                 }
@@ -130,7 +130,7 @@ namespace SistemaCajaAhorro.Controllers
             if (!credito.TablaAmortizacions.Any(t => t.Estado == "pendiente"))
             {
                 credito.Estado = "pagado";
-                credito.FechaPago = DateOnly.FromDateTime(DateTime.Now);
+                pago.FechaPago = DateOnly.FromDateTime(DateTime.Now);
             }
 
             _context.PagosCreditos.Add(pago);
@@ -151,17 +151,20 @@ namespace SistemaCajaAhorro.Controllers
                 .ToListAsync();
         }
 
-        // GET: api/PagosCredito/fecha/2024-01-01/2024-12-31
         [HttpGet("fecha/{fechaInicio}/{fechaFin}")]
         public async Task<ActionResult<IEnumerable<PagosCredito>>> GetPagosByFecha(DateTime fechaInicio, DateTime fechaFin)
         {
+            var fechaInicioDateOnly = DateOnly.FromDateTime(fechaInicio);
+            var fechaFinDateOnly = DateOnly.FromDateTime(fechaFin);
+
             return await _context.PagosCreditos
                 .Include(p => p.IdCreditoNavigation)
                 .Include(p => p.UsuarioRegistroNavigation)
-                .Where(p => p.FechaPago >= fechaInicio && p.FechaPago <= fechaFin)
+                .Where(p => p.FechaPago >= fechaInicioDateOnly && p.FechaPago <= fechaFinDateOnly)
                 .OrderByDescending(p => p.FechaPago)
                 .ToListAsync();
         }
+
 
         private bool PagoCreditoExists(int id)
         {

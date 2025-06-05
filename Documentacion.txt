@@ -81,6 +81,7 @@ DELETE /api/Aportaciones/{id}
 ------------------------------
 GET    /api/CuentasAhorro
 GET    /api/CuentasAhorro/{id}
+GET    /api/CuentasAhorro/resumen/{cedula}/{numeroCuenta}
 POST   /api/CuentasAhorro
 PUT    /api/CuentasAhorro/{id}
 DELETE /api/CuentasAhorro/{id}

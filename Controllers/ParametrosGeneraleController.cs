@@ -8,9 +8,9 @@ namespace SistemaCajaAhorro.Controllers
     [ApiController]
     public class ParametrosGeneraleController : ControllerBase
     {
-        private readonly SistemaCajaAhorroContext _context;
+        private readonly PublicContext _context;
 
-        public ParametrosGeneraleController(SistemaCajaAhorroContext context)
+        public ParametrosGeneraleController(PublicContext context)
         {
             _context = context;
         }

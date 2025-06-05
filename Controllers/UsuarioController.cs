@@ -10,9 +10,9 @@ namespace SistemaCajaAhorro.Controllers
     [ApiController]
     public class UsuarioController : ControllerBase
     {
-        private readonly SistemaCajaAhorroContext _context;
+        private readonly PublicContext _context;
 
-        public UsuarioController(SistemaCajaAhorroContext context)
+        public UsuarioController(PublicContext context)
         {
             _context = context;
         }

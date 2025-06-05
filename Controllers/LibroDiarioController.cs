@@ -22,8 +22,8 @@ namespace SistemaCajaAhorro.Controllers
             return await _context.LibroDiarios
                 .Include(l => l.UsuarioRegistroNavigation)
                 .Include(l => l.DetalleLibroDiarios)
-                    .ThenInclude(d => d.IdCuentaNavigation)
-                .OrderByDescending(l => l.Fecha)
+                    .ThenInclude(d => d.IdCuentaContableNavigation)
+                .OrderByDescending(l => l.FechaRegistro)
                 .ToListAsync();
         }
 
@@ -34,7 +34,7 @@ namespace SistemaCajaAhorro.Controllers
             var asiento = await _context.LibroDiarios
                 .Include(l => l.UsuarioRegistroNavigation)
                 .Include(l => l.DetalleLibroDiarios)
-                    .ThenInclude(d => d.IdCuentaNavigation)
+                    .ThenInclude(d => d.IdCuentaContableNavigation)
                 .FirstOrDefaultAsync(l => l.IdAsiento == id);
 
             if (asiento == null)
@@ -63,8 +63,8 @@ namespace SistemaCajaAhorro.Controllers
             }
 
             // Validar que los montos de débito y crédito son iguales
-            decimal totalDebito = asiento.DetalleLibroDiarios.Where(d => d.Tipo == "debito").Sum(d => d.Monto);
-            decimal totalCredito = asiento.DetalleLibroDiarios.Where(d => d.Tipo == "credito").Sum(d => d.Monto);
+            decimal totalDebito = asiento.DetalleLibroDiarios.Sum(d => d.Debe ?? 0);
+            decimal totalCredito = asiento.DetalleLibroDiarios.Sum(d => d.Haber ?? 0);
 
             if (totalDebito != totalCredito)
             {
@@ -74,17 +74,17 @@ namespace SistemaCajaAhorro.Controllers
             // Validar que todas las cuentas existen
             foreach (var detalle in asiento.DetalleLibroDiarios)
             {
-                var cuenta = await _context.PlanCuentas.FindAsync(detalle.IdCuenta);
+                var cuenta = await _context.PlanCuentas.FindAsync(detalle.IdCuentaContable);
                 if (cuenta == null)
                 {
-                    return BadRequest(new { mensaje = $"La cuenta {detalle.IdCuenta} no existe." });
+                    return BadRequest(new { mensaje = $"La cuenta {detalle.IdCuentaContable} no existe." });
                 }
             }
 
             // Establecer valores por defecto
-            asiento.Fecha = DateTime.Now;
+            asiento.FechaRegistro = DateTime.Now;
             asiento.Estado = "registrado";
-            asiento.Total = totalDebito;
+            asiento.TotalDebe = totalDebito; // o TotalHaber = totalCredito
 
             // Generar número de asiento
             asiento.NumeroAsiento = await GenerarNumeroAsiento();
@@ -102,9 +102,9 @@ namespace SistemaCajaAhorro.Controllers
             return await _context.LibroDiarios
                 .Include(l => l.UsuarioRegistroNavigation)
                 .Include(l => l.DetalleLibroDiarios)
-                    .ThenInclude(d => d.IdCuentaNavigation)
-                .Where(l => l.Fecha >= fechaInicio && l.Fecha <= fechaFin)
-                .OrderByDescending(l => l.Fecha)
+                    .ThenInclude(d => d.IdCuentaContableNavigation)
+                .Where(l => l.FechaRegistro >= fechaInicio && l.FechaRegistro <= fechaFin)
+                .OrderByDescending(l => l.FechaRegistro)
                 .ToListAsync();
         }
 
@@ -114,9 +114,9 @@ namespace SistemaCajaAhorro.Controllers
         {
             return await _context.DetalleLibroDiarios
                 .Include(d => d.IdAsientoNavigation)
-                .Include(d => d.IdCuentaNavigation)
-                .Where(d => d.IdCuenta == idCuenta)
-                .OrderByDescending(d => d.IdAsientoNavigation.Fecha)
+                .Include(d => d.IdCuentaContableNavigation)
+                .Where(d => d.IdCuentaContable == idCuenta)
+                .OrderByDescending(d => d.IdAsientoNavigation.FechaAsiento)
                 .ToListAsync();
         }
 
@@ -127,9 +127,9 @@ namespace SistemaCajaAhorro.Controllers
             return await _context.LibroDiarios
                 .Include(l => l.UsuarioRegistroNavigation)
                 .Include(l => l.DetalleLibroDiarios)
-                    .ThenInclude(d => d.IdCuentaNavigation)
+                    .ThenInclude(d => d.IdCuentaContableNavigation)
                 .Where(l => l.Estado == estado)
-                .OrderByDescending(l => l.Fecha)
+                .OrderByDescending(l => l.FechaAsiento)
                 .ToListAsync();
         }
 

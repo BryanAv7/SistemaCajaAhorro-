@@ -8,9 +8,9 @@ namespace SistemaCajaAhorro.Controllers
     [ApiController]
     public class HistorialAccioneController : ControllerBase
     {
-        private readonly SistemaCajaAhorroContext _context;
+        private readonly PublicContext _context;
 
-        public HistorialAccioneController(SistemaCajaAhorroContext context)
+        public HistorialAccioneController(PublicContext context)
         {
             _context = context;
         }

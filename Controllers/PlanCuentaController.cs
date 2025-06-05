@@ -8,9 +8,9 @@ namespace SistemaCajaAhorro.Controllers
     [ApiController]
     public class PlanCuentaController : ControllerBase
     {
-        private readonly SistemaCajaAhorroContext _context;
+        private readonly PublicContext _context;
 
-        public PlanCuentaController(SistemaCajaAhorroContext context)
+        public PlanCuentaController(PublicContext context)
         {
             _context = context;
         }

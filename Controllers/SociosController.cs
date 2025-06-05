@@ -9,9 +9,9 @@ namespace SistemaCajaAhorro.Controllers
     [ApiController]
     public class SocioController : ControllerBase
     {
-        private readonly SistemaCajaAhorroContext _context;
+        private readonly PublicContext _context;
 
-        public SocioController(SistemaCajaAhorroContext context)
+        public SocioController(PublicContext context)
         {
             _context = context;
         }

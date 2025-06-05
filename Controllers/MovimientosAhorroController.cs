@@ -20,7 +20,7 @@ namespace SistemaCajaAhorro.Controllers
         public async Task<ActionResult<IEnumerable<MovimientosAhorro>>> GetMovimientosAhorro()
         {
             return await _context.MovimientosAhorros
-                .Include(m => m.CuentaAhorroNavigation)
+                .Include(m => m.IdCuentaAhorroNavigation)
                 .Include(m => m.UsuarioRegistroNavigation)
                 .OrderByDescending(m => m.FechaMovimiento)
                 .ToListAsync();
@@ -31,7 +31,7 @@ namespace SistemaCajaAhorro.Controllers
         public async Task<ActionResult<MovimientosAhorro>> GetMovimiento(int id)
         {
             var movimiento = await _context.MovimientosAhorros
-                .Include(m => m.CuentaAhorroNavigation)
+                .Include(m => m.IdCuentaAhorroNavigation)
                 .Include(m => m.UsuarioRegistroNavigation)
                 .FirstOrDefaultAsync(m => m.IdMovimiento == id);
 
@@ -48,9 +48,9 @@ namespace SistemaCajaAhorro.Controllers
         public async Task<ActionResult<IEnumerable<MovimientosAhorro>>> GetMovimientosByCuenta(int idCuenta)
         {
             return await _context.MovimientosAhorros
-                .Include(m => m.CuentaAhorroNavigation)
+                .Include(m => m.IdCuentaAhorroNavigation)
                 .Include(m => m.UsuarioRegistroNavigation)
-                .Where(m => m.CuentaAhorro == idCuenta)
+                .Where(m => m.IdCuentaAhorro == idCuenta)
                 .OrderByDescending(m => m.FechaMovimiento)
                 .ToListAsync();
         }
@@ -60,7 +60,7 @@ namespace SistemaCajaAhorro.Controllers
         public async Task<ActionResult<MovimientosAhorro>> PostMovimiento(MovimientosAhorro movimiento)
         {
             // Validar que la cuenta existe
-            var cuenta = await _context.CuentasAhorros.FindAsync(movimiento.CuentaAhorro);
+            var cuenta = await _context.CuentasAhorros.FindAsync(movimiento.IdCuentaAhorro);
             if (cuenta == null)
             {
                 return BadRequest(new { mensaje = "La cuenta de ahorro no existe." });
@@ -95,12 +95,15 @@ namespace SistemaCajaAhorro.Controllers
             movimiento.FechaMovimiento = DateTime.Now;
 
             // Calcular el nuevo saldo
-            movimiento.SaldoNuevo = movimiento.TipoMovimiento == "deposito" 
-                ? cuenta.SaldoActual + movimiento.Monto 
-                : cuenta.SaldoActual - movimiento.Monto;
+            decimal saldoActual = cuenta.SaldoActual ?? 0m; // Si es null, toma 0
+
+            movimiento.SaldoNuevo = movimiento.TipoMovimiento == "deposito"
+                ? saldoActual + movimiento.Monto
+                : saldoActual - movimiento.Monto;
+
 
             // Establecer el saldo anterior
-            movimiento.SaldoAnterior = cuenta.SaldoActual;
+            movimiento.SaldoAnterior = cuenta.SaldoActual ?? 0m;
 
             // Agregar el movimiento
             _context.MovimientosAhorros.Add(movimiento);
@@ -112,10 +115,15 @@ namespace SistemaCajaAhorro.Controllers
                 // Registrar la acción en el historial
                 var historialAccion = new HistorialAccione
                 {
-                    Usuario = movimiento.UsuarioRegistro,
-                    TipoAccion = movimiento.TipoMovimiento,
-                    Descripcion = $"Movimiento de {movimiento.TipoMovimiento} por {movimiento.Monto} en cuenta {movimiento.CuentaAhorro}",
-                    FechaAccion = DateTime.Now
+                    IdUsuario = movimiento.UsuarioRegistro,
+                    Accion = movimiento.TipoMovimiento,
+                    TablaAfectada = "MovimientosAhorro",
+                    IdRegistroAfectado = movimiento.IdMovimiento,
+                    ValoresAnteriores = null, // o algún valor si tienes
+                    ValoresNuevos = $"Monto: {movimiento.Monto}, SaldoNuevo: {movimiento.SaldoNuevo}",
+                    FechaAccion = DateTime.Now,
+                    IpUsuario = null,         // si tienes la IP, aquí va
+                    UserAgent = null          // si tienes el user agent, aquí va
                 };
                 _context.HistorialAcciones.Add(historialAccion);
                 await _context.SaveChangesAsync();
@@ -140,13 +148,13 @@ namespace SistemaCajaAhorro.Controllers
         public async Task<IActionResult> DeleteMovimiento(int id)
         {
             var movimiento = await _context.MovimientosAhorros.FindAsync(id);
-            if (movimiento == null)
+            if (!movimiento.FechaMovimiento.HasValue)
             {
-                return NotFound(new { mensaje = "Movimiento no encontrado." });
+                return BadRequest(new { mensaje = "Fecha de movimiento no disponible." });
             }
 
             // No permitir eliminar movimientos antiguos
-            if ((DateTime.Now - movimiento.FechaMovimiento).TotalDays > 30)
+            if ((DateTime.Now - movimiento.FechaMovimiento.Value).TotalDays > 30)
             {
                 return BadRequest(new { mensaje = "No se pueden eliminar movimientos con más de 30 días de antigüedad." });
             }
@@ -162,7 +170,7 @@ namespace SistemaCajaAhorro.Controllers
         public async Task<ActionResult<IEnumerable<MovimientosAhorro>>> GetMovimientosByTipo(string tipo)
         {
             return await _context.MovimientosAhorros
-                .Include(m => m.CuentaAhorroNavigation)
+                .Include(m => m.IdCuentaAhorroNavigation)
                 .Include(m => m.UsuarioRegistroNavigation)
                 .Where(m => m.TipoMovimiento == tipo)
                 .OrderByDescending(m => m.FechaMovimiento)
@@ -174,7 +182,7 @@ namespace SistemaCajaAhorro.Controllers
         public async Task<ActionResult<IEnumerable<MovimientosAhorro>>> GetMovimientosByFecha(DateTime fechaInicio, DateTime fechaFin)
         {
             return await _context.MovimientosAhorros
-                .Include(m => m.CuentaAhorroNavigation)
+                .Include(m => m.IdCuentaAhorroNavigation)
                 .Include(m => m.UsuarioRegistroNavigation)
                 .Where(m => m.FechaMovimiento >= fechaInicio && m.FechaMovimiento <= fechaFin)
                 .OrderByDescending(m => m.FechaMovimiento)

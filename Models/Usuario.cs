@@ -17,7 +17,7 @@ public partial class Usuario
 
     public string Correo { get; set; } = null!;
 
-    public DateOnly? FechaNacimiento { get; set; }
+    public DateTime? FechaNacimiento { get; set; }
 
     public string? Ciudad { get; set; }
 
@@ -25,12 +25,13 @@ public partial class Usuario
 
     public string PerfilAcceso { get; set; } = null!;
 
-    public bool? Estado { get; set; }
+    public bool Estado { get; set; } = true; 
 
-    public DateTime? FechaCreacion { get; set; }
+    public DateTime FechaCreacion { get; set; } = DateTime.Now;
 
     public DateTime? UltimoAcceso { get; set; }
 
+    // Relaciones de navegación
     public virtual ICollection<Aportacione> Aportaciones { get; set; } = new List<Aportacione>();
 
     public virtual ICollection<Credito> Creditos { get; set; } = new List<Credito>();

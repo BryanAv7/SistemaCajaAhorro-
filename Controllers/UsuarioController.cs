@@ -1,30 +1,32 @@
-// Librerias
+// Librerías
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using SistemaCajaAhorro.Models;
-
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace SistemaCajaAhorro.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class UsuarioController : ControllerBase
+    public class UsuariosController : ControllerBase
     {
         private readonly PublicContext _context;
 
-        public UsuarioController(PublicContext context)
+        public UsuariosController(PublicContext context)
         {
             _context = context;
         }
 
-        // GET: api/Usuarios --Lista a todos los usuarios
+        // GET: api/Usuarios -- Lista a todos los usuarios
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Usuario>>> GetUsuarios()
         {
             return await _context.Usuarios.ToListAsync();
         }
 
-        // GET: api/Usuarios/id  -- Obtengo el usuario por ID
+        // GET: api/Usuarios/{id} -- Obtiene un usuario por ID
         [HttpGet("{id}")]
         public async Task<ActionResult<Usuario>> GetUsuario(int id)
         {
@@ -32,16 +34,21 @@ namespace SistemaCajaAhorro.Controllers
 
             if (usuario == null)
             {
-                return NotFound(new { mensaje = "Usuario no existe." }); ;
+                return NotFound(new { mensaje = "Usuario no existe." });
             }
 
             return usuario;
         }
 
-        // POST: api/Usuarios -- Crear  un nuevo usuario
+        // POST: api/Usuarios -- Crea un nuevo usuario
         [HttpPost]
         public async Task<ActionResult<Usuario>> PostUsuario(Usuario usuario)
         {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
             usuario.FechaCreacion = DateTime.Now;
             _context.Usuarios.Add(usuario);
             await _context.SaveChangesAsync();
@@ -49,13 +56,18 @@ namespace SistemaCajaAhorro.Controllers
             return CreatedAtAction(nameof(GetUsuario), new { id = usuario.IdUsuario }, usuario);
         }
 
-        // PUT: api/Usuarios/id  -- Actualizar un usuario 
+        // PUT: api/Usuarios/{id} -- Actualiza un usuario existente
         [HttpPut("{id}")]
         public async Task<IActionResult> PutUsuario(int id, Usuario usuario)
         {
             if (id != usuario.IdUsuario)
             {
-                return BadRequest();
+                return BadRequest(new { mensaje = "El ID del usuario no coincide." });
+            }
+
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
             }
 
             _context.Entry(usuario).State = EntityState.Modified;
@@ -68,7 +80,7 @@ namespace SistemaCajaAhorro.Controllers
             {
                 if (!UsuarioExists(id))
                 {
-                    return NotFound(new { mensaje = "Usuario no encontrado." }); ;
+                    return NotFound(new { mensaje = "Usuario no encontrado." });
                 }
                 else
                 {
@@ -79,7 +91,7 @@ namespace SistemaCajaAhorro.Controllers
             return NoContent();
         }
 
-        // DELETE: api/Usuarios/id  -- Eliminar un usuario por ID
+        // DELETE: api/Usuarios/{id} -- Elimina un usuario por ID
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteUsuario(int id)
         {
@@ -95,7 +107,7 @@ namespace SistemaCajaAhorro.Controllers
             return NoContent();
         }
 
-        // Método auxiliar para verificar si un usuario existe
+        // Método auxiliar para verificar existencia de usuario
         private bool UsuarioExists(int id)
         {
             return _context.Usuarios.Any(e => e.IdUsuario == id);

@@ -25,7 +25,12 @@ El Sistema de Caja de Ahorro es una aplicación web desarrollada en ASP.NET Core
 1. Clonar el repositorio:  
    ```bash
    git clone https://github.com/BryanAv7/SistemaCajaAhorro-
-   ```
-2. Ejecutar los scrips de la carpeta BD en el orden en el que estan numerados
 
-3. Modificar el archivo "appsettings.json" en la seccion "DefaultConnection" debe especificar su base de datos
+2. Instalar dependencias:  
+   ```bash
+   dotnet restore
+   ```
+
+3. Ejecutar los scrips de la carpeta BD en el orden en el que estan numerados
+
+4. Modificar el archivo "appsettings.json" en la seccion "DefaultConnection" debe especificar su base de datos

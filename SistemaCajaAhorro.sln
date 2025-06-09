@@ -3,9 +3,9 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.14.36121.58
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SistemaCajaAhorro", "SistemaCajaAhorro.csproj", "{DAEB30BE-B693-4CD0-8515-4826B341852C}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SistemaCajaAhorro", "SistemaCajaAhorro-\SistemaCajaAhorro.csproj", "{DAEB30BE-B693-4CD0-8515-4826B341852C}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SistemaCajaAhorroTest", "..\SistemaCajaAhorroTEst\SistemaCajaAhorroTest.csproj", "{CED616F6-6A58-4EDA-9566-B0FF2FA24BB8}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SistemaCajaAhorroTests", "SistemaCajaAhorroTests\SistemaCajaAhorroTests.csproj", "{6B393AFC-E572-49E9-8A8B-6DC9317F7F32}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -17,10 +17,10 @@ Global
 		{DAEB30BE-B693-4CD0-8515-4826B341852C}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{DAEB30BE-B693-4CD0-8515-4826B341852C}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{DAEB30BE-B693-4CD0-8515-4826B341852C}.Release|Any CPU.Build.0 = Release|Any CPU
-		{CED616F6-6A58-4EDA-9566-B0FF2FA24BB8}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{CED616F6-6A58-4EDA-9566-B0FF2FA24BB8}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{CED616F6-6A58-4EDA-9566-B0FF2FA24BB8}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{CED616F6-6A58-4EDA-9566-B0FF2FA24BB8}.Release|Any CPU.Build.0 = Release|Any CPU
+		{6B393AFC-E572-49E9-8A8B-6DC9317F7F32}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6B393AFC-E572-49E9-8A8B-6DC9317F7F32}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6B393AFC-E572-49E9-8A8B-6DC9317F7F32}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6B393AFC-E572-49E9-8A8B-6DC9317F7F32}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

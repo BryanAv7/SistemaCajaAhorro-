@@ -9,3 +9,9 @@
 *.tmp
 /.vs/SistemaCajaAhorro
 /.vs/ProjectEvaluation
+/SistemaCajaAhorroTest/bin/Debug/net8.0
+/SistemaCajaAhorroTest/obj
+/CajaAhorroTests/obj
+/SistemaCajaAhorroTests/obj
+/SistemaCajaAhorro-/bin/Debug/net8.0
+/SistemaCajaAhorro-/obj

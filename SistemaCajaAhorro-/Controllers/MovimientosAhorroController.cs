@@ -19,11 +19,19 @@ namespace SistemaCajaAhorro.Controllers
         [HttpGet]
         public async Task<ActionResult<IEnumerable<MovimientosAhorro>>> GetMovimientosAhorro()
         {
-            return await _context.MovimientosAhorros
-                .Include(m => m.IdCuentaAhorroNavigation)
-                .Include(m => m.UsuarioRegistroNavigation)
+            var movimientos = await _context.MovimientosAhorros
+                //.Include(m => m.IdCuentaAhorroNavigation)
+                //.Include(m => m.UsuarioRegistroNavigation)
                 .OrderByDescending(m => m.FechaMovimiento)
                 .ToListAsync();
+
+            // Si la lista está vacía, devuelve un mensaje informativo
+            if (movimientos == null || movimientos.Count == 0)
+            {
+                return NotFound(new { mensaje = "No hay movimientos registrados." });
+            }
+
+            return movimientos;
         }
 
         // GET: api/MovimientosAhorro/5

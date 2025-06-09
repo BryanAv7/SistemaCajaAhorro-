@@ -9,7 +9,7 @@ public partial class MovimientosAhorro
 
     public int IdCuentaAhorro { get; set; }
 
-    public string TipoMovimiento { get; set; } = null!;
+    public string TipoMovimiento { get; set; } = "";
 
     public decimal Monto { get; set; }
 

@@ -1,5 +1,6 @@
 ﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Microsoft.AspNetCore.Mvc;
+using Moq;
 using Microsoft.EntityFrameworkCore;
 using SistemaCajaAhorro.Controllers;
 using SistemaCajaAhorro.Models;
@@ -20,7 +21,8 @@ namespace SistemaCajaAhorroTests
         public void Setup()
         {
             _dbContextOptions = new DbContextOptionsBuilder<PublicContext>()
-                .UseInMemoryDatabase(databaseName: Guid.NewGuid().ToString())
+                .UseInMemoryDatabase(databaseName: Guid.NewGuid().ToString()) // ahora sí compila
+                .EnableSensitiveDataLogging()
                 .Options;
 
             _testSocio = new Socio

@@ -44,6 +44,13 @@ namespace SistemaCajaAhorro.Controllers
         [HttpPost]
         public async Task<ActionResult<HistorialAccione>> PostHistorialAccione(HistorialAccione historialAccione)
         {
+            // Validar que el usuario existe
+            var usuario = await _context.Usuarios.FindAsync(historialAccione.IdUsuario);
+            if (usuario == null)
+            {
+                return BadRequest(new { mensaje = "El usuario especificado no existe." });
+            }
+
             historialAccione.FechaAccion = DateTime.Now;
             _context.HistorialAcciones.Add(historialAccione);
             await _context.SaveChangesAsync();
@@ -97,7 +104,7 @@ namespace SistemaCajaAhorro.Controllers
             return NoContent();
         }
 
-        // Método auxiliar para verificar si un historial existe
+        // MÃ©todo auxiliar para verificar si un historial existe
         private bool HistorialAccioneExists(int id)
         {
             return _context.HistorialAcciones.Any(e => e.IdHistorial == id);

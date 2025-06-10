@@ -1,16 +1,11 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Query;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
-using Moq;
 using SistemaCajaAhorro.Controllers;
 using SistemaCajaAhorro.Models;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Linq.Expressions;
-using System.Runtime.CompilerServices;
-using System.Threading;
 using System.Threading.Tasks;
 
 namespace SistemaCajaAhorroTests
@@ -18,255 +13,203 @@ namespace SistemaCajaAhorroTests
     [TestClass]
     public class HistorialAccioneControllerTests
     {
-        private Mock<PublicContext> _mockContext = null!;
-        private HistorialAccioneController _controller = null!;
-        private Mock<DbSet<HistorialAccione>> _mockHistorialAccionesDbSet = null!;
-        private Mock<DbSet<Usuario>> _mockUsuariosDbSet = null!;
-
-        public HistorialAccioneControllerTests()
-        {
-            _mockContext = new Mock<PublicContext>();
-            _mockHistorialAccionesDbSet = new Mock<DbSet<HistorialAccione>>();
-            _mockUsuariosDbSet = new Mock<DbSet<Usuario>>();
-        }
+        private DbContextOptions<PublicContext> _dbContextOptions;
+        private HistorialAccione _testHistorial1;
+        private HistorialAccione _testHistorial2;
+        private Usuario _testUsuario;
 
         [TestInitialize]
         public void Setup()
         {
-            var historiales = new List<HistorialAccione>
+            _dbContextOptions = new DbContextOptionsBuilder<PublicContext>()
+                .UseInMemoryDatabase(databaseName: Guid.NewGuid().ToString())
+                .EnableSensitiveDataLogging()
+                .Options;
+
+            _testUsuario = new Usuario
             {
-                new HistorialAccione { Id = 1, Accion = "Test", Fecha = DateTime.Now, UsuarioId = 1 },
-                new HistorialAccione { Id = 2, Accion = "Test2", Fecha = DateTime.Now, UsuarioId = 1 }
+                IdUsuario = 1,
+                Nombres = "Test",
+                Apellidos = "User",
+                Cedula = "1234567890",
+                Correo = "test@test.com",
+                Contrasena = "password",
+                PerfilAcceso = "admin",
+                Estado = true
             };
 
-            _mockHistorialAccionesDbSet = MockDbSetHelper.CreateMockDbSet(historiales);
-            _mockContext.Setup(c => c.HistorialAcciones).Returns(_mockHistorialAccionesDbSet.Object);
-
-            var usuarios = new List<Usuario>
+            _testHistorial1 = new HistorialAccione
             {
-                new Usuario { IdUsuario = 1, Nombres = "Usuario1" }
-            }.AsQueryable();
+                IdHistorial = 1,
+                IdUsuario = 1,
+                Accion = "Crear",
+                TablaAfectada = "Socios",
+                IdRegistroAfectado = 1,
+                ValoresAnteriores = null,
+                ValoresNuevos = "Nuevo socio creado",
+                FechaAccion = DateTime.Now
+            };
 
-            // Configuración para operaciones asíncronas
-            var asyncProvider = new Mock<IAsyncQueryProvider>();
-            asyncProvider
-                .Setup(x => x.ExecuteAsync<HistorialAccione>(
-                    It.IsAny<Expression>(),
-                    It.IsAny<CancellationToken>()))
-                .Returns(historiales.First());
-
-            _mockHistorialAccionesDbSet.As<IQueryable<HistorialAccione>>().Setup(m => m.Provider).Returns(asyncProvider.Object);
-            _mockHistorialAccionesDbSet.As<IQueryable<HistorialAccione>>().Setup(m => m.Expression).Returns(historiales.AsQueryable().Expression);
-            _mockHistorialAccionesDbSet.As<IQueryable<HistorialAccione>>().Setup(m => m.ElementType).Returns(historiales.AsQueryable().ElementType);
-            _mockHistorialAccionesDbSet.As<IQueryable<HistorialAccione>>().Setup(m => m.GetEnumerator()).Returns(historiales.GetEnumerator());
-
-            _mockHistorialAccionesDbSet.Setup(d => d.FindAsync(It.IsAny<object[]>(), It.IsAny<CancellationToken>()))
-                .ReturnsAsync((object[] ids, CancellationToken token) => historiales.FirstOrDefault(h => h.IdHistorial == (int)ids[0])!);
-
-            _mockUsuariosDbSet.As<IQueryable<Usuario>>().Setup(m => m.Provider).Returns(asyncProvider.Object);
-            _mockUsuariosDbSet.As<IQueryable<Usuario>>().Setup(m => m.Expression).Returns(usuarios.Expression);
-            _mockUsuariosDbSet.As<IQueryable<Usuario>>().Setup(m => m.ElementType).Returns(usuarios.ElementType);
-            _mockUsuariosDbSet.As<IQueryable<Usuario>>().Setup(m => m.GetEnumerator()).Returns(usuarios.GetEnumerator());
-
-            _mockContext.Setup(c => c.SaveChangesAsync(It.IsAny<CancellationToken>()))
-                .ReturnsAsync(1);
-
-            _controller = new HistorialAccioneController(_mockContext.Object);
-        }
-
-        private class TestAsyncEnumerator<T> : IAsyncEnumerator<T>
-        {
-            private readonly IEnumerator<T> _inner;
-
-            public TestAsyncEnumerator(IEnumerator<T> inner)
+            _testHistorial2 = new HistorialAccione
             {
-                _inner = inner;
-            }
-
-            public T Current => _inner.Current;
-
-            public ValueTask<bool> MoveNextAsync()
-            {
-                return new ValueTask<bool>(_inner.MoveNext());
-            }
-
-            public ValueTask DisposeAsync()
-            {
-                _inner.Dispose();
-                return new ValueTask();
-            }
+                IdHistorial = 2,
+                IdUsuario = 1,
+                Accion = "Actualizar",
+                TablaAfectada = "Socios",
+                IdRegistroAfectado = 1,
+                ValoresAnteriores = "Nombre: Juan",
+                ValoresNuevos = "Nombre: Juan Pérez",
+                FechaAccion = DateTime.Now
+            };
         }
 
         [TestMethod]
-        public async Task GetHistorialAcciones_ReturnsAllHistorial()
+        public async Task GetHistorialAcciones_ReturnsAllHistoriales()
         {
-            // Act
-            var result = await _controller.GetHistorialAcciones();
+            using (var context = new PublicContext(_dbContextOptions))
+            {
+                context.Usuarios.Add(_testUsuario);
+                context.HistorialAcciones.Add(_testHistorial1);
+                context.HistorialAcciones.Add(_testHistorial2);
+                context.SaveChanges();
 
-            // Assert
-            Assert.IsNotNull(result);
-            var okResult = result.Result as OkObjectResult;
-            Assert.IsNotNull(okResult);
-            var historiales = okResult.Value as IEnumerable<HistorialAccione>;
-            Assert.IsNotNull(historiales);
-            Assert.AreEqual(2, historiales.Count());
+                var controller = new HistorialAccioneController(context);
+                var result = await controller.GetHistorialAcciones();
+
+                Assert.IsNotNull(result.Value);
+                Assert.AreEqual(2, result.Value.Count());
+            }
         }
 
         [TestMethod]
         public async Task GetHistorialAccione_WithValidId_ReturnsHistorial()
         {
-            // Act
-            var result = await _controller.GetHistorialAccione(1);
+            using (var context = new PublicContext(_dbContextOptions))
+            {
+                context.Usuarios.Add(_testUsuario);
+                context.HistorialAcciones.Add(_testHistorial1);
+                context.SaveChanges();
 
-            // Assert
-            Assert.IsNotNull(result);
-            var okResult = result.Result as OkObjectResult;
-            Assert.IsNotNull(okResult);
-            var historial = okResult.Value as HistorialAccione;
-            Assert.IsNotNull(historial);
-            Assert.AreEqual(1, historial.IdHistorial);
+                var controller = new HistorialAccioneController(context);
+                var result = await controller.GetHistorialAccione(1);
+
+                Assert.IsNotNull(result.Value);
+                Assert.AreEqual(1, result.Value.IdHistorial);
+            }
         }
 
         [TestMethod]
         public async Task GetHistorialAccione_WithInvalidId_ReturnsNotFound()
         {
-            // Act
-            var result = await _controller.GetHistorialAccione(999);
+            using (var context = new PublicContext(_dbContextOptions))
+            {
+                var controller = new HistorialAccioneController(context);
+                var result = await controller.GetHistorialAccione(999);
 
-            // Assert
-            Assert.IsNotNull(result);
-            Assert.IsInstanceOfType(result.Result, typeof(NotFoundObjectResult));
+                Assert.IsInstanceOfType(result.Result, typeof(NotFoundObjectResult));
+            }
         }
 
         [TestMethod]
         public async Task PostHistorialAccione_WithValidData_ReturnsCreatedResult()
         {
-            // Arrange
-            var newHistorial = new HistorialAccione
+            using (var context = new PublicContext(_dbContextOptions))
             {
-                IdUsuario = 1,
-                Accion = "New Test Action",
-                TablaAfectada = "TestTable",
-                IdRegistroAfectado = 1,
-                ValoresAnteriores = "Old Value",
-                ValoresNuevos = "New Value",
-                FechaAccion = DateTime.Now
-            };
+                context.Usuarios.Add(_testUsuario);
+                context.SaveChanges();
 
-            _mockHistorialAccionesDbSet.Setup(d => d.Add(It.IsAny<HistorialAccione>()))
-                .Callback<HistorialAccione>(h => h.IdHistorial = 3);
+                var controller = new HistorialAccioneController(context);
+                var result = await controller.PostHistorialAccione(_testHistorial1);
 
-            // Act
-            var result = await _controller.PostHistorialAccione(newHistorial);
+                Assert.IsInstanceOfType(result.Result, typeof(CreatedAtActionResult));
+                Assert.IsTrue(context.HistorialAcciones.Any(h => h.IdHistorial == 1));
+            }
+        }
 
-            // Assert
-            Assert.IsNotNull(result);
-            var createdResult = result.Result as CreatedAtActionResult;
-            Assert.IsNotNull(createdResult);
-            var historial = createdResult.Value as HistorialAccione;
-            Assert.IsNotNull(historial);
-            Assert.AreEqual(3, historial.IdHistorial);
+        [TestMethod]
+        public async Task PostHistorialAccione_WithInvalidUsuario_ReturnsBadRequest()
+        {
+            using (var context = new PublicContext(_dbContextOptions))
+            {
+                var controller = new HistorialAccioneController(context);
+                var historial = new HistorialAccione
+                {
+                    IdUsuario = 999, // ID de usuario inválido
+                    Accion = "Crear",
+                    TablaAfectada = "Socios",
+                    IdRegistroAfectado = 2,
+                    ValoresAnteriores = null,
+                    ValoresNuevos = "Nuevo socio creado",
+                    FechaAccion = DateTime.Now
+                };
+
+                var result = await controller.PostHistorialAccione(historial);
+
+                Assert.IsInstanceOfType(result.Result, typeof(BadRequestObjectResult));
+            }
         }
 
         [TestMethod]
         public async Task PutHistorialAccione_WithValidData_ReturnsNoContent()
         {
-            // Arrange
-            var existingHistorial = new HistorialAccione
+            using (var context = new PublicContext(_dbContextOptions))
             {
-                IdHistorial = 1,
-                IdUsuario = 1,
-                Accion = "Test Action",
-                TablaAfectada = "TestTable",
-                IdRegistroAfectado = 1,
-                ValoresAnteriores = "Old Value",
-                ValoresNuevos = "New Value",
-                FechaAccion = DateTime.Now
-            };
+                context.Usuarios.Add(_testUsuario);
+                context.HistorialAcciones.Add(_testHistorial1);
+                context.SaveChanges();
 
-            _mockHistorialAccionesDbSet.Setup(d => d.FindAsync(1, It.IsAny<CancellationToken>()))
-                .ReturnsAsync(existingHistorial);
+                var controller = new HistorialAccioneController(context);
+                _testHistorial1.Accion = "Updated Test Action";
+                _testHistorial1.ValoresNuevos = "Updated Value";
 
-            var updatedHistorial = new HistorialAccione
-            {
-                IdHistorial = 1,
-                IdUsuario = 1,
-                Accion = "Updated Test Action",
-                TablaAfectada = "TestTable",
-                IdRegistroAfectado = 1,
-                ValoresAnteriores = "Old Value",
-                ValoresNuevos = "Updated Value",
-                FechaAccion = DateTime.Now
-            };
+                var result = await controller.PutHistorialAccione(1, _testHistorial1);
 
-            // Act
-            var result = await _controller.PutHistorialAccione(1, updatedHistorial);
-
-            // Assert
-            Assert.IsNotNull(result);
-            Assert.IsInstanceOfType(result, typeof(NoContentResult));
+                Assert.IsInstanceOfType(result, typeof(NoContentResult));
+            }
         }
 
         [TestMethod]
         public async Task PutHistorialAccione_IdMismatch_ReturnsBadRequest()
         {
-            // Arrange
-            var historial = new HistorialAccione
+            using (var context = new PublicContext(_dbContextOptions))
             {
-                IdHistorial = 1,
-                IdUsuario = 1,
-                Accion = "Test Action",
-                TablaAfectada = "TestTable",
-                IdRegistroAfectado = 1,
-                ValoresAnteriores = "Old Value",
-                ValoresNuevos = "New Value",
-                FechaAccion = DateTime.Now
-            };
+                context.Usuarios.Add(_testUsuario);
+                context.HistorialAcciones.Add(_testHistorial1);
+                context.SaveChanges();
 
-            // Act
-            var result = await _controller.PutHistorialAccione(2, historial);
+                var controller = new HistorialAccioneController(context);
+                var result = await controller.PutHistorialAccione(2, _testHistorial1);
 
-            // Assert
-            Assert.IsNotNull(result);
-            Assert.IsInstanceOfType(result, typeof(BadRequestObjectResult));
+                Assert.IsInstanceOfType(result, typeof(BadRequestObjectResult));
+            }
         }
 
         [TestMethod]
         public async Task DeleteHistorialAccione_WithValidId_ReturnsNoContent()
         {
-            // Arrange
-            var existingHistorial = new HistorialAccione
+            using (var context = new PublicContext(_dbContextOptions))
             {
-                IdHistorial = 1,
-                IdUsuario = 1,
-                Accion = "Test Action",
-                TablaAfectada = "TestTable",
-                IdRegistroAfectado = 1,
-                ValoresAnteriores = "Old Value",
-                ValoresNuevos = "New Value",
-                FechaAccion = DateTime.Now
-            };
+                context.Usuarios.Add(_testUsuario);
+                context.HistorialAcciones.Add(_testHistorial1);
+                context.SaveChanges();
 
-            _mockHistorialAccionesDbSet.Setup(d => d.FindAsync(1, It.IsAny<CancellationToken>()))
-                .ReturnsAsync(existingHistorial);
+                var controller = new HistorialAccioneController(context);
+                var result = await controller.DeleteHistorialAccione(1);
 
-            // Act
-            var result = await _controller.DeleteHistorialAccione(1);
-
-            // Assert
-            Assert.IsNotNull(result);
-            Assert.IsInstanceOfType(result, typeof(NoContentResult));
+                Assert.IsInstanceOfType(result, typeof(NoContentResult));
+            }
         }
 
         [TestMethod]
         public async Task DeleteHistorialAccione_WithInvalidId_ReturnsNotFound()
         {
-            // Act
-            var result = await _controller.DeleteHistorialAccione(999);
+            using (var context = new PublicContext(_dbContextOptions))
+            {
+                var controller = new HistorialAccioneController(context);
+                var result = await controller.DeleteHistorialAccione(999);
 
-            // Assert
-            Assert.IsNotNull(result);
-            Assert.IsInstanceOfType(result, typeof(NotFoundObjectResult));
+                Assert.IsInstanceOfType(result, typeof(NotFoundObjectResult));
+            }
         }
     }
 }
